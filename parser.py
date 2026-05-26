@@ -6,7 +6,7 @@ import subprocess
 import socket
 from collections import defaultdict
 
-LOGFILE = "/home/ya.ryazancev/cups_to_zabbix/tmp/cups.log"
+LOGFILE = "/home/ya.ryazancev/cups_to_zabbix/tmp/cups2.log"
 
 HOST = "cups-demo"
 SERVER = "localhost"
@@ -53,10 +53,6 @@ with open(LOGFILE, encoding="utf-8") as f:
 
 
 payload = {
-    "host": hostname,
-    "users": list(users.keys()),
-    "jobs_count": jobs_count,
-    "pages_total": pages_total,
     "jobs": jobs_raw
 }
 
