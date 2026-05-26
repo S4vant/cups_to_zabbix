@@ -5,7 +5,7 @@ import json
 import subprocess
 from collections import defaultdict
 
-LOGFILE = "/home/ya.ryazancev/cups_to_zabbix/tmp/cups2.log"
+LOGFILE = "tmp/cups2.log"
 
 HOST = "cups-demo"
 SERVER = "localhost"
@@ -110,27 +110,27 @@ def send_to_zabbix(key: str, value: str):
 
 
 # RAW JSON
-send_to_zabbix(
-    "cups.jobs.raw",
-    json_data
-)
+# send_to_zabbix(
+#     "cups.jobs.raw",
+#     json_data
+# )
 
-# Список пользователей
-send_to_zabbix(
-    "cups.users",
-    ",".join(users.keys())
-)
+# # Список пользователей
+# send_to_zabbix(
+#     "cups.users",
+#     ",".join(users.keys())
+# )
 
-# Количество задач
-send_to_zabbix(
-    "cups.jobs.count",
-    str(jobs_count)
-)
+# # Количество задач
+# send_to_zabbix(
+#     "cups.jobs.count",
+#     str(jobs_count)
+# )
 
-# Всего страниц
-send_to_zabbix(
-    "cups.pages.total",
-    str(pages_total)
-)
+# # Всего страниц
+# send_to_zabbix(
+#     "cups.pages.total",
+#     str(pages_total)
+# )
 
-print("sent")
+print(payload)
