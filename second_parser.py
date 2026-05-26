@@ -11,7 +11,7 @@ import sys
 ZABBIX_SERVER = "192.168.1.10"
 HOSTNAME = "cups-demo"
 
-LOGFILE = "/tmp/cups.log"
+LOGFILE = "tmp/cups.log"
 
 ####################################
 
