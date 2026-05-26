@@ -6,7 +6,7 @@ import subprocess
 import socket
 from collections import defaultdict
 
-LOGFILE = "/tmp/cups.log"
+LOGFILE = "/home/ya.ryazancev/cups_to_zabbix/tmp/cups.log"
 
 HOST = "cups-demo"
 SERVER = "localhost"
