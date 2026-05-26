@@ -1,224 +1,145 @@
 #!/usr/bin/env python3
 
 import re
+import json
 import subprocess
-import sys
+import socket
 
-####################################
-# НАСТРОЙКИ
-####################################
+LOGFILE = "/tmp/cups.log"
 
-ZABBIX_SERVER = "192.168.1.10"
-HOSTNAME = "cups-demo"
+HOST = "cups-demo"
 
-LOGFILE = "tmp/cups.log"
-
-####################################
-
-
-def send(key, value):
-
-    cmd = [
-        "zabbix_sender",
-        "-z", ZABBIX_SERVER,
-        "-s", HOSTNAME,
-        "-k", key,
-        "-o", str(value)
-    ]
-
-    r = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True
-    )
-
-    print(
-        f"{key}: {value}"
-    )
-
-    if r.returncode != 0:
-        print(
-            "ERROR:",
-            r.stderr
-        )
-
-
-try:
-
-    with open(
-        LOGFILE,
-        encoding="utf8"
-    ) as f:
-
-        lines = [
-            x.strip()
-            for x in f.readlines()
-            if x.strip()
-        ]
-
-except:
-
-    print(
-        "Нет файла логов"
-    )
-
-    sys.exit(1)
+SERVER = "127.0.0.1"
 
 
 jobs = []
-users = set()
-printers = set()
+
+hostname = socket.gethostname()
+
 
 pattern = re.compile(
     r"^(.*?)\s+([\w\.-]+)\s+(\d+)\s+(.*)$"
 )
 
-for line in lines:
 
-    m = pattern.match(line)
+with open(
+    LOGFILE,
+    encoding="utf8"
+) as f:
 
-    if not m:
-        continue
+    for line in f:
 
+        line = line.strip()
 
-    printer_job = m.group(1)
+        m = pattern.match(
+            line
+        )
 
-    user = m.group(2)
+        if not m:
 
-    bytes_size = int(
-        m.group(3)
-    )
-
-    date = m.group(4)
-
-
-    job_match = re.search(
-        r'-(\d+)$',
-        printer_job
-    )
-
-    job = (
-        job_match.group(1)
-        if job_match
-        else "0"
-    )
+            continue
 
 
-    printer = re.sub(
-        r'-\d+$',
-        '',
-        printer_job
-    )
+        printer_job = m.group(
+            1
+        )
+
+        user = m.group(
+            2
+        )
+
+        bytes_size = int(
+            m.group(
+                3
+            )
+        )
+
+        date = m.group(
+            4
+        )
 
 
-    jobs.append({
+        job_match = re.search(
+            r'-(\d+)$',
+            printer_job
+        )
 
-        "user":
-            user,
-
-        "printer":
-            printer,
-
-        "job":
-            job,
-
-        "bytes":
-            bytes_size,
-
-        "date":
-            date
-
-    })
+        job_id = (
+            job_match.group(
+                1
+            )
+            if job_match
+            else "0"
+        )
 
 
-    users.add(
-        user
-    )
-
-    printers.add(
-        printer
-    )
+        printer = re.sub(
+            r'-\d+$',
+            '',
+            printer_job
+        )
 
 
-if not jobs:
+        jobs.append({
 
-    print(
-        "Нет заданий"
-    )
+            "user":
+                user,
 
-    sys.exit()
+            "job":
+
+                job_id,
+
+            "printer":
+                printer,
+
+            "bytes":
+                bytes_size,
+
+            "date":
+                date
+
+        })
 
 
-last = jobs[-1]
+payload = {
+
+    "hostname":
+        hostname,
+
+    "jobs":
+        jobs
+
+}
 
 
-####################################
-# ПОСЛЕДНЕЕ ЗАДАНИЕ
-####################################
-
-
-send(
-    "cups.last.user",
-    last["user"]
+data = json.dumps(
+    payload,
+    ensure_ascii=False
 )
 
 
-send(
-    "cups.last.printer",
-    last["printer"]
-)
 
+subprocess.run([
 
-send(
-    "cups.last.job",
-    last["job"]
-)
+    "zabbix_sender",
 
+    "-z",
+    SERVER,
 
-send(
-    "cups.last.bytes",
-    last["bytes"]
-)
+    "-s",
+    HOST,
 
+    "-k",
+    "cups.jobs.json",
 
-send(
-    "cups.last.date",
-    last["date"]
-)
+    "-o",
+    data
 
-
-####################################
-# ОБЩАЯ СТАТИСТИКА
-####################################
-
-
-send(
-    "cups.jobs.count",
-    len(jobs)
-)
-
-
-send(
-    "cups.total.bytes",
-    sum(
-        x["bytes"]
-        for x in jobs
-    )
-)
-
-
-send(
-    "cups.unique.users",
-    len(users)
-)
-
-
-send(
-    "cups.unique.printers",
-    len(printers)
-)
+])
 
 
 print(
-    "\nDONE"
+
+    "Отправлено"
+
 )
