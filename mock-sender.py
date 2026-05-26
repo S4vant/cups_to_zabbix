@@ -4,6 +4,7 @@ import json
 import subprocess
 
 HOST = "cups-demo"
+
 SERVER = "localhost"
 PORT = "10051"
 
@@ -12,11 +13,20 @@ with open("mock_jobs.json", encoding="utf-8") as f:
 
 jobs = data["jobs"]
 
-pages_total = sum(j["pages"] for j in jobs)
-users_count = len(set(j["user"] for j in jobs))
+payload = json.dumps(
+    data,
+    ensure_ascii=False
+)
+
 jobs_count = len(jobs)
 
-payload = json.dumps(data, ensure_ascii=False)
+pages_total = sum(
+    j["pages"] for j in jobs
+)
+
+users_count = len(
+    set(j["user"] for j in jobs)
+)
 
 metrics = [
     ("cups.jobs.raw", payload),
@@ -27,6 +37,10 @@ metrics = [
 
 for key, value in metrics:
 
+    print("SENDING:", key)
+    print(value)
+    print()
+
     subprocess.run([
         "zabbix_sender",
         "-z", SERVER,
@@ -36,4 +50,4 @@ for key, value in metrics:
         "-o", value
     ])
 
-print("mock data sent")
+print("done")
