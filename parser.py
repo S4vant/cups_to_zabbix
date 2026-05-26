@@ -2,20 +2,19 @@
 
 import re
 import json
+import socket
 import subprocess
-from collections import defaultdict
 
-LOGFILE = "tmp/cups2.log"
+from datetime import datetime
 
-HOST = "cups-demo"
-SERVER = "localhost"
-PORT = "10051"
+LOGFILE = "/home/ya.ryazancev/cups_to_zabbix/tmp/cups2.log"
 
-# Формат:
-# printer user jobid [date] total pages - localhost rest...
-#
-# Пример:
-# Generic-IPP-Everywhere i.vdovkin 32 [15/May/2026:16:35:43 +0400] total 1 - localhost Согласие на обработку персональных данных.docx A4 one-sided
+HOST = 'cups-demo'
+
+ZABBIX_SERVER = "localhost"
+ZABBIX_PORT = "10051"
+
+RAW_ITEM_KEY = "cups.jobs.raw"
 
 pattern = re.compile(
     r'^(?P<printer>\S+)\s+'
@@ -27,37 +26,35 @@ pattern = re.compile(
     r'(?P<rest>.+)$'
 )
 
-users = defaultdict(int)
-
-pages_total = 0
-jobs_count = 0
-jobs_raw = []
-
 
 def extract_filename(rest: str) -> str:
-    """
-    Извлекает имя файла из хвоста строки.
-    Убирает типовые окончания:
-      - A4 one-sided
-      - - -
-      - Scanned Document
-    """
 
-    # Убираем хвосты вида " - -"
     rest = re.sub(r'\s+-\s+-\s*$', '', rest)
-
-    # Убираем хвост "A4 one-sided"
     rest = re.sub(r'\s+A4\s+one-sided\s*$', '', rest)
-
-    # Иногда встречается:
-    # filename.pdf — Scanned Document
     rest = re.sub(r'\s+[—-]\s+Scanned Document\s*$', '', rest)
 
     return rest.strip()
 
 
+def parse_cups_time(timestr: str):
+
+    dt = datetime.strptime(
+        timestr,
+        "%d/%b/%Y:%H:%M:%S %z"
+    )
+
+    return {
+        "timestamp": int(dt.timestamp()),
+        "iso": dt.isoformat()
+    }
+
+
+jobs = []
+
 with open(LOGFILE, encoding="utf-8") as f:
+
     for line in f:
+
         line = line.strip()
 
         if not line:
@@ -70,67 +67,46 @@ with open(LOGFILE, encoding="utf-8") as f:
 
         printer = m.group("printer")
         user = m.group("user")
-        job_id = m.group("job_id")
-        time = m.group("time")
+        job_id = int(m.group("job_id"))
         pages = int(m.group("pages"))
+
+        raw_time = m.group("time")
+        parsed_time = parse_cups_time(raw_time)
 
         rest = m.group("rest")
         file_name = extract_filename(rest)
 
-        users[user] += 1
-        pages_total += pages
-        jobs_count += 1
-
-        jobs_raw.append({
-            "printer": printer,
+        jobs.append({
+            "host": HOST,
             "user": user,
+            "printer": printer,
             "job_id": job_id,
-            "pages": pages,
             "file": file_name,
-            "time": time
+            "pages": pages,
+            "timestamp": parsed_time["timestamp"],
+            "datetime": parsed_time["iso"]
         })
 
 
 payload = {
-    "jobs": jobs_raw
+    "jobs": jobs
 }
 
-json_data = json.dumps(payload, ensure_ascii=False)
+
+json_data = json.dumps(
+    payload,
+    ensure_ascii=False
+)
 
 
-def send_to_zabbix(key: str, value: str):
-    subprocess.run([
-        "zabbix_sender",
-        "-z", SERVER,
-        "-p", PORT,
-        "-s", HOST,
-        "-k", key,
-        "-o", value
-    ])
+subprocess.run([
+    "zabbix_sender",
+    "-z", ZABBIX_SERVER,
+    "-p", ZABBIX_PORT,
+    "-s", HOST,
+    "-k", RAW_ITEM_KEY,
+    "-o", json_data
+])
 
 
-# RAW JSON
-# send_to_zabbix(
-#     "cups.jobs.raw",
-#     json_data
-# )
-
-# # Список пользователей
-# send_to_zabbix(
-#     "cups.users",
-#     ",".join(users.keys())
-# )
-
-# # Количество задач
-# send_to_zabbix(
-#     "cups.jobs.count",
-#     str(jobs_count)
-# )
-
-# # Всего страниц
-# send_to_zabbix(
-#     "cups.pages.total",
-#     str(pages_total)
-# )
-
-print(payload)
+print("sent")

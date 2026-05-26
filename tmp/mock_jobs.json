@@ -1,0 +1,64 @@
+{
+  "jobs": [
+    {
+      "host": "pc-buh-01",
+      "user": "ivanov",
+      "printer": "HP-LaserJet-Accounting",
+      "job_id": 1001,
+      "file": "salary_report_q2.pdf",
+      "pages": 14,
+      "timestamp": 1748502000,
+      "datetime": "2026-05-29T09:00:00+03:00"
+    },
+    {
+      "host": "pc-buh-02",
+      "user": "petrova",
+      "printer": "Canon-iR-Office",
+      "job_id": 1002,
+      "file": "contract_458.docx",
+      "pages": 3,
+      "timestamp": 1748502900,
+      "datetime": "2026-05-29T09:15:00+03:00"
+    },
+    {
+      "host": "pc-hr-01",
+      "user": "sidorov",
+      "printer": "HP-LaserJet-HR",
+      "job_id": 1003,
+      "file": "candidate_cv.pdf",
+      "pages": 12,
+      "timestamp": 1748503800,
+      "datetime": "2026-05-29T09:30:00+03:00"
+    },
+    {
+      "host": "pc-fin-01",
+      "user": "smirnova",
+      "printer": "Xerox-Floor-3",
+      "job_id": 1004,
+      "file": "budget_2026.xlsx",
+      "pages": 27,
+      "timestamp": 1748504700,
+      "datetime": "2026-05-29T09:45:00+03:00"
+    },
+    {
+      "host": "pc-dev-01",
+      "user": "alexeev",
+      "printer": "Kyocera-Dev",
+      "job_id": 1005,
+      "file": "system_architecture_v4.pdf",
+      "pages": 42,
+      "timestamp": 1748505600,
+      "datetime": "2026-05-29T10:00:00+03:00"
+    },
+    {
+      "host": "pc-dev-02",
+      "user": "morozov",
+      "printer": "Kyocera-Dev",
+      "job_id": 1006,
+      "file": "deployment_checklist.docx",
+      "pages": 5,
+      "timestamp": 1748506500,
+      "datetime": "2026-05-29T10:15:00+03:00"
+    }
+    ]
+}
